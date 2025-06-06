@@ -177,7 +177,9 @@ def cron_send_newsletter():
         now = datetime.now()
         should_send = False
 
-        if schedule.frequency == 'daily':
+        if schedule.frequency == 'minute':
+            should_send = True
+        elif schedule.frequency == 'daily':
             should_send = True
         elif schedule.frequency == 'weekly':
             if now.weekday() == schedule.day_of_week:
@@ -188,8 +190,14 @@ def cron_send_newsletter():
 
         # Check if it's the right time
         if should_send:
-            schedule_time = datetime.strptime(schedule.time, '%H:%M').time()
-            if now.time().hour == schedule_time.hour and now.time().minute == schedule_time.minute:
+            if schedule.frequency == 'minute':
+                # For minute frequency, send immediately
+                send_now = True
+            else:
+                schedule_time = datetime.strptime(schedule.time, '%H:%M').time()
+                send_now = now.time().hour == schedule_time.hour and now.time().minute == schedule_time.minute
+
+            if send_now:
                 # Generate newsletter content
                 articles = get_bay_area_news()
                 if not articles:

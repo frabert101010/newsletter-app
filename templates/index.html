@@ -164,6 +164,7 @@
                 <div class="form-group">
                     <label for="frequency">Frequency:</label>
                     <select id="frequency" name="frequency" required>
+                        <option value="minute" {% if schedule and schedule.frequency == 'minute' %}selected{% endif %}>Every Minute (Testing)</option>
                         <option value="daily" {% if schedule and schedule.frequency == 'daily' %}selected{% endif %}>Daily</option>
                         <option value="weekly" {% if schedule and schedule.frequency == 'weekly' %}selected{% endif %}>Weekly</option>
                         <option value="monthly" {% if schedule and schedule.frequency == 'monthly' %}selected{% endif %}>Monthly</option>

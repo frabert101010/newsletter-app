@@ -149,16 +149,17 @@ def send_newsletter(html_content=None, recipient_email=None):
         # Create email message
         msg = MIMEMultipart('alternative')
         msg['Subject'] = f"Notizie Tech & Bay Area - {datetime.now().strftime('%d %B %Y')}"
-        msg['From'] = os.getenv('EMAIL_FROM')
+        msg['From'] = os.getenv('EMAIL_USER')
         msg['To'] = recipient_email or "frabertolini91@gmail.com"
 
         # Attach HTML content
         msg.attach(MIMEText(html_content, 'html'))
 
         # Send email
-        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp_server:
-            smtp_server.login(os.getenv('EMAIL_FROM'), os.getenv('EMAIL_PASSWORD'))
-            smtp_server.sendmail(os.getenv('EMAIL_FROM'), msg['To'], msg.as_string())
+        with smtplib.SMTP(os.getenv('EMAIL_SERVER', 'smtp.gmail.com'), int(os.getenv('EMAIL_PORT', 587))) as smtp_server:
+            smtp_server.starttls()
+            smtp_server.login(os.getenv('EMAIL_USER'), os.getenv('EMAIL_PASSWORD'))
+            smtp_server.sendmail(os.getenv('EMAIL_USER'), msg['To'], msg.as_string())
         
         print(f"Newsletter inviata con successo a {msg['To']} alle {datetime.now()}")
     except Exception as e:

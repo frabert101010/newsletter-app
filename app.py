@@ -1,7 +1,7 @@
 import os
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
-from newsletter import send_newsletter
+from newsletter import send_newsletter, get_bay_area_news, generate_newsletter_html
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -58,8 +58,17 @@ def send_newsletter_route():
         return redirect(url_for('index'))
     
     try:
+        # Generate newsletter content once
+        articles = get_bay_area_news()
+        if not articles:
+            flash('No articles found to send!', 'error')
+            return redirect(url_for('index'))
+        
+        html_content = generate_newsletter_html(articles)
+        
+        # Send to all recipients
         for recipient in recipients:
-            send_newsletter(recipient.email)
+            send_newsletter(html_content=html_content, recipient_email=recipient.email)
         flash('Newsletter sent successfully!', 'success')
     except Exception as e:
         flash(f'Error sending newsletter: {str(e)}', 'error')

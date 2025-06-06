@@ -155,15 +155,26 @@ def send_newsletter(html_content=None, recipient_email=None):
         # Attach HTML content
         msg.attach(MIMEText(html_content, 'html'))
         
-        # Connect to Gmail's SMTP server
+        # Enable debug mode for SMTP
         server = smtplib.SMTP('smtp.gmail.com', 587)
-        server.starttls()
+        server.set_debuglevel(1)
         
-        # Login with Gmail credentials
-        server.login(os.getenv('EMAIL_USER'), os.getenv('EMAIL_PASSWORD'))
+        # Start TLS
+        server.ehlo()
+        server.starttls()
+        server.ehlo()
+        
+        # Login with credentials
+        email_user = os.getenv('EMAIL_USER')
+        email_password = os.getenv('EMAIL_PASSWORD')
+        
+        if not email_user or not email_password:
+            raise ValueError("Email credentials not found in environment variables")
+            
+        server.login(email_user, email_password)
         
         # Send email
-        server.sendmail(os.getenv('EMAIL_USER'), msg['To'], msg.as_string())
+        server.sendmail(email_user, msg['To'], msg.as_string())
         server.quit()
         
         print(f"Newsletter inviata con successo a {msg['To']} alle {datetime.now()}")

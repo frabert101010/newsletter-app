@@ -244,16 +244,24 @@
         document.getElementById('frequency').addEventListener('change', function() {
             const weeklyOption = document.getElementById('weekly-option');
             const monthlyOption = document.getElementById('monthly-option');
+            const timeOption = document.querySelector('.form-group:has(#time)');
             
-            if (this.value === 'weekly') {
+            if (this.value === 'minute') {
+                weeklyOption.style.display = 'none';
+                monthlyOption.style.display = 'none';
+                timeOption.style.display = 'none';
+            } else if (this.value === 'weekly') {
                 weeklyOption.style.display = 'block';
                 monthlyOption.style.display = 'none';
+                timeOption.style.display = 'block';
             } else if (this.value === 'monthly') {
                 weeklyOption.style.display = 'none';
                 monthlyOption.style.display = 'block';
+                timeOption.style.display = 'block';
             } else {
                 weeklyOption.style.display = 'none';
                 monthlyOption.style.display = 'none';
+                timeOption.style.display = 'block';
             }
         });
 

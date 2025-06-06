@@ -152,7 +152,9 @@ def send_newsletter(html_content=None, recipient_email=None):
         msg['From'] = os.getenv('EMAIL_USER')
         msg['To'] = recipient_email or "frabertolini91@gmail.com"
         
-        # Attach HTML content
+        # Create both plain text and HTML versions
+        text_content = "Per visualizzare la newsletter, si prega di utilizzare un client email che supporta HTML."
+        msg.attach(MIMEText(text_content, 'plain'))
         msg.attach(MIMEText(html_content, 'html'))
         
         # Enable debug mode for SMTP

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Newsletter Manager</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            background-color: #1a73e8;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+            margin: -20px -20px 20px -20px;
+        }
+        .button {
+            background-color: #1a73e8;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin: 20px 0;
+        }
+        .button:hover {
+            background-color: #1557b0;
+        }
+        .recipients {
+            margin-top: 20px;
+        }
+        .recipient {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .nav {
+            margin-bottom: 20px;
+        }
+        .nav a {
+            color: #1a73e8;
+            text-decoration: none;
+            margin-right: 15px;
+        }
+        .flash {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .flash.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .flash.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Newsletter Manager</h1>
+        </div>
+        
+        <div class="nav">
+            <a href="{{ url_for('index') }}">Home</a>
+            <a href="{{ url_for('recipients') }}">Manage Recipients</a>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form action="{{ url_for('send') }}" method="post">
+            <button type="submit" class="button">Send Newsletter Now</button>
+        </form>
+
+        <div class="recipients">
+            <h2>Active Recipients</h2>
+            {% if recipients %}
+                {% for recipient in recipients %}
+                    <div class="recipient">
+                        {{ recipient.name or 'No name' }} ({{ recipient.email }})
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>No active recipients. <a href="{{ url_for('recipients') }}">Add some!</a></p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html> 

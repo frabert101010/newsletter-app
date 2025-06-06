@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Manage Recipients - Newsletter Manager</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            background-color: #1a73e8;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+            margin: -20px -20px 20px -20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="text"],
+        input[type="email"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .button {
+            background-color: #1a73e8;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .button:hover {
+            background-color: #1557b0;
+        }
+        .recipients {
+            margin-top: 20px;
+        }
+        .recipient {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .recipient-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .nav {
+            margin-bottom: 20px;
+        }
+        .nav a {
+            color: #1a73e8;
+            text-decoration: none;
+            margin-right: 15px;
+        }
+        .flash {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .flash.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .flash.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .status.active {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status.inactive {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Manage Recipients</h1>
+        </div>
+        
+        <div class="nav">
+            <a href="{{ url_for('index') }}">Home</a>
+            <a href="{{ url_for('recipients') }}">Manage Recipients</a>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form action="{{ url_for('add_recipient') }}" method="post">
+            <div class="form-group">
+                <label for="name">Name (optional):</label>
+                <input type="text" id="name" name="name">
+            </div>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <button type="submit" class="button">Add Recipient</button>
+        </form>
+
+        <div class="recipients">
+            <h2>All Recipients</h2>
+            {% if recipients %}
+                {% for recipient in recipients %}
+                    <div class="recipient">
+                        <div>
+                            <strong>{{ recipient.name or 'No name' }}</strong>
+                            <div>{{ recipient.email }}</div>
+                            <span class="status {{ 'active' if recipient.active else 'inactive' }}">
+                                {{ 'Active' if recipient.active else 'Inactive' }}
+                            </span>
+                        </div>
+                        <div class="recipient-actions">
+                            <a href="{{ url_for('toggle_recipient', id=recipient.id) }}" class="button">
+                                {{ 'Deactivate' if recipient.active else 'Activate' }}
+                            </a>
+                            <a href="{{ url_for('delete_recipient', id=recipient.id) }}" class="button" 
+                               onclick="return confirm('Are you sure you want to delete this recipient?')">
+                                Delete
+                            </a>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>No recipients found. Add some using the form above!</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html> 

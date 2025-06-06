@@ -17,8 +17,9 @@
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
         }
-        h1 {
+        h1, h2 {
             color: #2c3e50;
             text-align: center;
         }
@@ -30,7 +31,9 @@
             margin-bottom: 5px;
             color: #34495e;
         }
-        input[type="email"] {
+        input[type="email"],
+        input[type="time"],
+        select {
             width: 100%;
             padding: 8px;
             border: 1px solid #ddd;
@@ -48,10 +51,12 @@
         button:hover {
             background-color: #2980b9;
         }
-        .recipients-list {
+        .recipients-list,
+        .history-list {
             margin-top: 20px;
         }
-        .recipient-item {
+        .recipient-item,
+        .history-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -82,6 +87,31 @@
         }
         .send-button:hover {
             background-color: #219a52;
+        }
+        .schedule-section {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .status-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status-error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .toggle-button {
+            background-color: #6c757d;
+        }
+        .toggle-button:hover {
+            background-color: #5a6268;
         }
     </style>
 </head>
@@ -115,9 +145,12 @@
                 {% for recipient in recipients %}
                     <div class="recipient-item">
                         <span>{{ recipient.email }}</span>
-                        <a href="{{ url_for('delete_recipient', id=recipient.id) }}" onclick="return confirm('Are you sure you want to delete this recipient?')">
-                            <button style="background-color: #e74c3c;">Delete</button>
-                        </a>
+                        <div>
+                            <a href="{{ url_for('delete_recipient', id=recipient.id) }}" 
+                               onclick="return confirm('Are you sure you want to delete this recipient?')">
+                                <button style="background-color: #e74c3c;">Delete</button>
+                            </a>
+                        </div>
                     </div>
                 {% endfor %}
             {% else %}
@@ -125,9 +158,106 @@
             {% endif %}
         </div>
 
+        <div class="schedule-section">
+            <h2>Schedule Settings</h2>
+            <form action="{{ url_for('update_schedule') }}" method="post">
+                <div class="form-group">
+                    <label for="frequency">Frequency:</label>
+                    <select id="frequency" name="frequency" required>
+                        <option value="daily" {% if schedule and schedule.frequency == 'daily' %}selected{% endif %}>Daily</option>
+                        <option value="weekly" {% if schedule and schedule.frequency == 'weekly' %}selected{% endif %}>Weekly</option>
+                        <option value="monthly" {% if schedule and schedule.frequency == 'monthly' %}selected{% endif %}>Monthly</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" id="weekly-option" style="display: none;">
+                    <label for="day_of_week">Day of Week:</label>
+                    <select id="day_of_week" name="day_of_week">
+                        <option value="0" {% if schedule and schedule.day_of_week == 0 %}selected{% endif %}>Monday</option>
+                        <option value="1" {% if schedule and schedule.day_of_week == 1 %}selected{% endif %}>Tuesday</option>
+                        <option value="2" {% if schedule and schedule.day_of_week == 2 %}selected{% endif %}>Wednesday</option>
+                        <option value="3" {% if schedule and schedule.day_of_week == 3 %}selected{% endif %}>Thursday</option>
+                        <option value="4" {% if schedule and schedule.day_of_week == 4 %}selected{% endif %}>Friday</option>
+                        <option value="5" {% if schedule and schedule.day_of_week == 5 %}selected{% endif %}>Saturday</option>
+                        <option value="6" {% if schedule and schedule.day_of_week == 6 %}selected{% endif %}>Sunday</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" id="monthly-option" style="display: none;">
+                    <label for="day_of_month">Day of Month:</label>
+                    <select id="day_of_month" name="day_of_month">
+                        {% for day in range(1, 32) %}
+                            <option value="{{ day }}" {% if schedule and schedule.day_of_month == day %}selected{% endif %}>{{ day }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="time">Time:</label>
+                    <input type="time" id="time" name="time" value="{{ schedule.time if schedule else '09:00' }}" required>
+                </div>
+                
+                <button type="submit">Update Schedule</button>
+                {% if schedule %}
+                    <a href="{{ url_for('toggle_schedule') }}">
+                        <button type="button" class="toggle-button">
+                            {% if schedule.active %}Deactivate{% else %}Activate{% endif %} Schedule
+                        </button>
+                    </a>
+                {% endif %}
+            </form>
+        </div>
+
+        <div class="history-list">
+            <h2>Recent Newsletters</h2>
+            {% if history %}
+                {% for entry in history %}
+                    <div class="history-item">
+                        <div>
+                            <strong>{{ entry.subject }}</strong>
+                            <div>Sent: {{ entry.sent_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                            <div>Recipients: {{ entry.recipients }}</div>
+                            <span class="status-badge status-{{ entry.status }}">
+                                {{ entry.status|title }}
+                            </span>
+                        </div>
+                        <div>
+                            <a href="{{ url_for('view_newsletter', id=entry.id) }}">
+                                <button>View</button>
+                            </a>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>No newsletters sent yet.</p>
+            {% endif %}
+        </div>
+
         <a href="{{ url_for('send_newsletter_route') }}">
-            <button class="send-button">Send Newsletter to All Recipients</button>
+            <button class="send-button">Send Newsletter Now</button>
         </a>
     </div>
+
+    <script>
+        // Show/hide weekly/monthly options based on frequency
+        document.getElementById('frequency').addEventListener('change', function() {
+            const weeklyOption = document.getElementById('weekly-option');
+            const monthlyOption = document.getElementById('monthly-option');
+            
+            if (this.value === 'weekly') {
+                weeklyOption.style.display = 'block';
+                monthlyOption.style.display = 'none';
+            } else if (this.value === 'monthly') {
+                weeklyOption.style.display = 'none';
+                monthlyOption.style.display = 'block';
+            } else {
+                weeklyOption.style.display = 'none';
+                monthlyOption.style.display = 'none';
+            }
+        });
+
+        // Trigger change event on page load
+        document.getElementById('frequency').dispatchEvent(new Event('change'));
+    </script>
 </body>
 </html> 

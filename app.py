@@ -129,11 +129,16 @@ def update_schedule():
     day_of_month = request.form.get('day_of_month')
     time = request.form.get('time')
     
+    print(f"Updating schedule with: frequency={frequency}, day_of_week={day_of_week}, day_of_month={day_of_month}, time={time}")
+    
     try:
         schedule = Schedule.query.first()
         if not schedule:
             schedule = Schedule()
             db.session.add(schedule)
+            print("Created new schedule")
+        else:
+            print(f"Found existing schedule: active={schedule.active}")
         
         schedule.frequency = frequency
         schedule.day_of_week = int(day_of_week) if day_of_week else None
@@ -142,9 +147,11 @@ def update_schedule():
         schedule.active = True
         
         db.session.commit()
+        print(f"Schedule updated successfully: active={schedule.active}")
         flash('Schedule updated successfully!', 'success')
     except Exception as e:
         db.session.rollback()
+        print(f"Error updating schedule: {str(e)}")
         flash(f'Error updating schedule: {str(e)}', 'error')
     
     return redirect(url_for('index'))
@@ -168,49 +175,67 @@ def view_newsletter(id):
 def cron_send_newsletter():
     """Endpoint for Render's cron job to trigger newsletter sending."""
     try:
+        print("Cron job triggered")
         # Check if there's an active schedule
         schedule = Schedule.query.filter_by(active=True).first()
         if not schedule:
+            print("No active schedule found")
             return "No active schedule found", 200
 
+        print(f"Found active schedule: frequency={schedule.frequency}, time={schedule.time}")
         # Check if it's time to send based on schedule
         now = datetime.now()
         should_send = False
 
         if schedule.frequency == 'minute':
             should_send = True
+            print("Minute frequency - will send")
         elif schedule.frequency == 'daily':
             should_send = True
+            print("Daily frequency - will send")
         elif schedule.frequency == 'weekly':
             if now.weekday() == schedule.day_of_week:
                 should_send = True
+                print(f"Weekly frequency - today is the right day (weekday={now.weekday()}, scheduled={schedule.day_of_week})")
+            else:
+                print(f"Weekly frequency - wrong day (weekday={now.weekday()}, scheduled={schedule.day_of_week})")
         elif schedule.frequency == 'monthly':
             if now.day == schedule.day_of_month:
                 should_send = True
+                print(f"Monthly frequency - today is the right day (day={now.day}, scheduled={schedule.day_of_month})")
+            else:
+                print(f"Monthly frequency - wrong day (day={now.day}, scheduled={schedule.day_of_month})")
 
         # Check if it's the right time
         if should_send:
             if schedule.frequency == 'minute':
                 # For minute frequency, send immediately
                 send_now = True
+                print("Minute frequency - sending now")
             else:
                 schedule_time = datetime.strptime(schedule.time, '%H:%M').time()
                 send_now = now.time().hour == schedule_time.hour and now.time().minute == schedule_time.minute
+                print(f"Checking time: current={now.time()}, scheduled={schedule_time}, send_now={send_now}")
 
             if send_now:
+                print("Time to send newsletter")
                 # Generate newsletter content
                 articles = get_bay_area_news()
                 if not articles:
+                    print("No articles found to send")
                     return "No articles found to send", 200
                 
+                print(f"Found {len(articles)} articles")
                 html_content = generate_newsletter_html(articles)
                 subject = f"Notizie Tech & Bay Area - {now.strftime('%d %B %Y')}"
                 
                 # Get all active recipients
                 recipients = Recipient.query.filter_by(active=True).all()
                 if not recipients:
+                    print("No active recipients found")
                     return "No active recipients found", 200
                 
+                print(f"Found {len(recipients)} active recipients")
                 # Send to all recipients
                 recipient_emails = [r.email for r in recipients]
                 for recipient in recipients:
@@ -226,13 +251,17 @@ def cron_send_newsletter():
                 db.session.add(history_entry)
                 db.session.commit()
                 
+                print("Newsletter sent successfully")
                 return "Newsletter sent successfully", 200
             else:
+                print("Not the scheduled time yet")
                 return "Not the scheduled time yet", 200
         else:
+            print("Not the scheduled day")
             return "Not the scheduled day", 200
             
     except Exception as e:
+        print(f"Error in cron job: {str(e)}")
         # Record error in history
         history_entry = NewsletterHistory(
             subject="Failed automated newsletter",

@@ -44,32 +44,46 @@ def get_bay_area_news():
         start_date = end_date - timedelta(days=15)
         print(f"Date range: {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}")
         
-        news = newsapi.get_everything(
-            q=query,
-            language='it',  # Get Italian news
-            sort_by='relevancy',
-            page_size=10,  # Get more articles to choose from
-            from_param=start_date.strftime('%Y-%m-%d'),
-            to=end_date.strftime('%Y-%m-%d')
-        )
+        try:
+            news = newsapi.get_everything(
+                q=query,
+                language='it',  # Get Italian news
+                sort_by='relevancy',
+                page_size=10,  # Get more articles to choose from
+                from_param=start_date.strftime('%Y-%m-%d'),
+                to=end_date.strftime('%Y-%m-%d')
+            )
+            print(f"News API Response Status: {news.get('status', 'No status')}")
+            print(f"Total Results: {news.get('totalResults', 0)}")
+            print(f"Response Keys: {news.keys() if news else 'No response'}")
+        except Exception as api_error:
+            print(f"News API Error: {str(api_error)}")
+            return []
         
-        print(f"News API Response Status: {news.get('status', 'No status')}")
-        print(f"Total Results: {news.get('totalResults', 0)}")
-        
-        if news and 'articles' in news and news['articles']:
-            articles = news['articles']
-            print(f"Found {len(articles)} articles")
-            for i, article in enumerate(articles, 1):
-                print(f"\nArticle {i}:")
-                print(f"Title: {article.get('title', 'No title')}")
-                print(f"Description: {article.get('description', 'No description')[:100]}...")
-                print(f"Source: {article.get('source', {}).get('name', 'Unknown')}")
-                print(f"Published At: {article.get('publishedAt', 'Unknown')}")
-            return articles[:5]  # Return top 5 most relevant articles
-        else:
+        if not news:
+            print("No response from News API")
+            return []
+            
+        if news.get('status') != 'ok':
+            print(f"News API returned error status: {news.get('status')}")
+            print(f"Error message: {news.get('message', 'No error message')}")
+            return []
+            
+        articles = news.get('articles', [])
+        if not articles:
             print("No articles found in API response")
             print(f"Full API Response: {news}")
             return []
+            
+        print(f"Found {len(articles)} articles")
+        for i, article in enumerate(articles, 1):
+            print(f"\nArticle {i}:")
+            print(f"Title: {article.get('title', 'No title')}")
+            print(f"Description: {article.get('description', 'No description')[:100]}...")
+            print(f"Source: {article.get('source', {}).get('name', 'Unknown')}")
+            print(f"Published At: {article.get('publishedAt', 'Unknown')}")
+            
+        return articles[:5]  # Return top 5 most relevant articles
     except Exception as e:
         print(f"Error fetching news: {str(e)}")
         return []

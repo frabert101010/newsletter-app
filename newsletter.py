@@ -163,38 +163,20 @@ def send_newsletter(recipient_email=None):
         msg['From'] = os.getenv('EMAIL_USER')
         msg['To'] = recipient_email or "frabertolini91@gmail.com"
         
-        # Create both plain text and HTML versions
-        text_content = "Per visualizzare la newsletter, si prega di utilizzare un client email che supporta HTML."
-        msg.attach(MIMEText(text_content, 'plain'))
+        # Attach HTML content
         msg.attach(MIMEText(html_content, 'html'))
         
-        # Enable debug mode for SMTP
-        server = smtplib.SMTP('smtp.gmail.com', 587)
-        server.set_debuglevel(1)
-        
-        # Start TLS
-        server.ehlo()
-        server.starttls()
-        server.ehlo()
-        
-        # Login with credentials
-        email_user = os.getenv('EMAIL_USER')
-        email_password = os.getenv('EMAIL_PASSWORD')
-        
-        if not email_user or not email_password:
-            raise ValueError("Email credentials not found in environment variables")
+        # Connect to SMTP server and send
+        with smtplib.SMTP(os.getenv('EMAIL_SERVER'), int(os.getenv('EMAIL_PORT'))) as server:
+            server.starttls()
+            server.login(os.getenv('EMAIL_USER'), os.getenv('EMAIL_PASSWORD'))
+            server.send_message(msg)
             
-        server.login(email_user, email_password)
-        
-        # Send email
-        server.sendmail(email_user, msg['To'], msg.as_string())
-        server.quit()
-        
         print(f"Newsletter inviata con successo a {msg['To']} alle {datetime.now()}")
         return True
     except Exception as e:
         print(f"Errore nell'invio della newsletter: {e}")
-        raise e
+        return False
 
 def main():
     """Main function to schedule and run the newsletter every 30 seconds."""

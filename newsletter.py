@@ -35,14 +35,14 @@ def get_bay_area_news():
         print("\n=== Fetching News Articles ===")
         print(f"Using News API Key: {os.getenv('NEWS_API_KEY')[:5]}...")  # Only show first 5 chars for security
         
-        # Search for Bay Area tech and AI news in Italian with more specific query
+        # Search for Bay Area tech and AI news in Italian with broader query
         news = newsapi.get_everything(
-            q='("Silicon Valley" OR "San Francisco" OR "Bay Area") AND (tech OR tecnologia OR AI OR "intelligenza artificiale" OR startup) AND (USA OR "Stati Uniti" OR America)',
+            q='("Silicon Valley" OR "San Francisco" OR "Bay Area" OR "California") AND (tech OR tecnologia OR AI OR "intelligenza artificiale" OR startup OR "big tech")',
             language='it',  # Get Italian news
             sort_by='relevancy',
-            page_size=5,
-            domains='corriere.it,repubblica.it,ilsole24ore.com,ansa.it,ilpost.it,techprincess.it,digitalic.it,agendadigitale.eu',  # Italian tech and news sources
-            from_param=(datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')  # Only get news from last 7 days
+            page_size=10,  # Increased to get more articles to filter from
+            domains='corriere.it,repubblica.it,ilsole24ore.com,ansa.it,ilpost.it,techprincess.it,digitalic.it,agendadigitale.eu,lastampa.it,ilfattoquotidiano.it,ilgiornale.it,ilmanifesto.it,ilfoglio.it',  # Added more Italian news sources
+            from_param=(datetime.now() - timedelta(days=14)).strftime('%Y-%m-%d')  # Increased to 14 days to get more articles
         )
         
         print(f"News API Response Status: {news.get('status', 'No status')}")
@@ -57,13 +57,16 @@ def get_bay_area_news():
                 title = article.get('title', '').lower()
                 description = article.get('description', '').lower()
                 # Check if article is about Bay Area tech
-                if any(term in title or term in description for term in ['silicon valley', 'san francisco', 'bay area', 'california']):
-                    filtered_articles.append(article)
-                    print(f"\nArticle: {article.get('title', 'No title')}")
-                    print(f"Description: {article.get('description', 'No description')[:100]}...")
+                if any(term in title or term in description for term in ['silicon valley', 'san francisco', 'bay area', 'california', 'big tech', 'big tech']):
+                    # Additional check to ensure it's about tech
+                    if any(tech_term in title or tech_term in description for tech_term in ['tech', 'tecnologia', 'ai', 'intelligenza artificiale', 'startup']):
+                        filtered_articles.append(article)
+                        print(f"\nArticle: {article.get('title', 'No title')}")
+                        print(f"Description: {article.get('description', 'No description')[:100]}...")
             
             if filtered_articles:
-                return filtered_articles
+                # Return only the top 5 most relevant articles
+                return filtered_articles[:5]
             else:
                 print("No articles found after filtering for Bay Area tech")
                 return []

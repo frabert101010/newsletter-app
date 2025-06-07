@@ -30,19 +30,19 @@ def translate_text(text):
         return text
 
 def get_bay_area_news():
-    """Fetch top 5 news articles about Bay Area and tech in Italian."""
+    """Fetch top 5 news articles about America in Italian."""
     try:
         print("\n=== Fetching News Articles ===")
         print(f"Using News API Key: {os.getenv('NEWS_API_KEY')[:5]}...")  # Only show first 5 chars for security
         
-        # Search for Bay Area tech and AI news in Italian with broader query
+        # Search for general American news in Italian
         news = newsapi.get_everything(
-            q='("Silicon Valley" OR "San Francisco" OR "Bay Area" OR "California") AND (tech OR tecnologia OR AI OR "intelligenza artificiale" OR startup OR "big tech")',
+            q='(USA OR "Stati Uniti" OR America)',
             language='it',  # Get Italian news
             sort_by='relevancy',
-            page_size=10,  # Increased to get more articles to filter from
-            domains='corriere.it,repubblica.it,ilsole24ore.com,ansa.it,ilpost.it,techprincess.it,digitalic.it,agendadigitale.eu,lastampa.it,ilfattoquotidiano.it,ilgiornale.it,ilmanifesto.it,ilfoglio.it',  # Added more Italian news sources
-            from_param=(datetime.now() - timedelta(days=14)).strftime('%Y-%m-%d')  # Increased to 14 days to get more articles
+            page_size=5,
+            domains='corriere.it,repubblica.it,ilsole24ore.com,ansa.it,ilpost.it,lastampa.it,ilfattoquotidiano.it,ilgiornale.it,ilmanifesto.it,ilfoglio.it',  # Italian news sources
+            from_param=(datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')  # Last 7 days
         )
         
         print(f"News API Response Status: {news.get('status', 'No status')}")
@@ -51,25 +51,11 @@ def get_bay_area_news():
         if news and 'articles' in news and news['articles']:
             articles = news['articles']
             print(f"Found {len(articles)} articles")
-            # Filter articles to ensure they're about Bay Area tech
-            filtered_articles = []
-            for article in articles:
-                title = article.get('title', '').lower()
-                description = article.get('description', '').lower()
-                # Check if article is about Bay Area tech
-                if any(term in title or term in description for term in ['silicon valley', 'san francisco', 'bay area', 'california', 'big tech', 'big tech']):
-                    # Additional check to ensure it's about tech
-                    if any(tech_term in title or tech_term in description for tech_term in ['tech', 'tecnologia', 'ai', 'intelligenza artificiale', 'startup']):
-                        filtered_articles.append(article)
-                        print(f"\nArticle: {article.get('title', 'No title')}")
-                        print(f"Description: {article.get('description', 'No description')[:100]}...")
-            
-            if filtered_articles:
-                # Return only the top 5 most relevant articles
-                return filtered_articles[:5]
-            else:
-                print("No articles found after filtering for Bay Area tech")
-                return []
+            for i, article in enumerate(articles, 1):
+                print(f"\nArticle {i}:")
+                print(f"Title: {article.get('title', 'No title')}")
+                print(f"Description: {article.get('description', 'No description')[:100]}...")
+            return articles
         else:
             print("No articles found in API response")
             print(f"Full API Response: {news}")
@@ -136,7 +122,7 @@ def generate_newsletter_html(articles):
     </head>
     <body>
         <div class="header">
-            <h1>Notizie Tech & Bay Area Settimanali</h1>
+            <h1>Notizie dagli Stati Uniti</h1>
         </div>
         <div class="content">
             <div class="date">Settimana del {{ current_date }}</div>
@@ -157,22 +143,19 @@ def generate_newsletter_html(articles):
     template = Template(template)
     return template.render(articles=articles, current_date=datetime.now().strftime('%d %B %Y'))
 
-def send_newsletter(html_content=None, recipient_email=None):
-    """Send the newsletter via email."""
+def send_newsletter(recipient_email=None):
+    """Send newsletter to specified email or default recipient."""
     try:
-        # If no HTML content provided, generate it
-        if html_content is None:
-            # Get news articles
-            articles = get_bay_area_news()
-            if not articles:
-                print("Nessun articolo trovato da inviare nella newsletter")
-                return
-            # Generate HTML content
-            html_content = generate_newsletter_html(articles)
+        articles = get_bay_area_news()
+        if not articles:
+            print("No articles found to send")
+            return False
+            
+        html_content = generate_newsletter_html(articles)
         
         # Create email message
         msg = MIMEMultipart('alternative')
-        msg['Subject'] = f"Notizie Tech & Bay Area - {datetime.now().strftime('%d %B %Y')}"
+        msg['Subject'] = f"Notizie dagli Stati Uniti - {datetime.now().strftime('%d %B %Y')}"
         msg['From'] = os.getenv('EMAIL_USER')
         msg['To'] = recipient_email or "frabertolini91@gmail.com"
         
@@ -204,6 +187,7 @@ def send_newsletter(html_content=None, recipient_email=None):
         server.quit()
         
         print(f"Newsletter inviata con successo a {msg['To']} alle {datetime.now()}")
+        return True
     except Exception as e:
         print(f"Errore nell'invio della newsletter: {e}")
         raise e

@@ -299,6 +299,14 @@ def cron_send_newsletter():
         
         return f"Error sending newsletter: {str(e)}", 500
 
+@app.route('/cron/test')
+def cron_test():
+    """Test endpoint to verify cron job connectivity."""
+    print("\n=== Cron Test Endpoint Called ===")
+    print(f"Current time: {datetime.now()}")
+    print("=== Cron Test Completed ===\n")
+    return "Cron test successful", 200
+
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5001))
     app.run(host='0.0.0.0', port=port) 

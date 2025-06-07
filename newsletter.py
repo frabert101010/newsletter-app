@@ -35,14 +35,16 @@ def get_bay_area_news():
         print("\n=== Fetching News Articles ===")
         print(f"Using News API Key: {os.getenv('NEWS_API_KEY')[:5]}...")  # Only show first 5 chars for security
         
-        # Search for general American news in Italian
+        # Search for general American news in Italian with broader parameters
+        query = '(USA OR "Stati Uniti" OR America)'
+        print(f"Search Query: {query}")
+        
         news = newsapi.get_everything(
-            q='(USA OR "Stati Uniti" OR America)',
+            q=query,
             language='it',  # Get Italian news
             sort_by='relevancy',
-            page_size=5,
-            domains='corriere.it,repubblica.it,ilsole24ore.com,ansa.it,ilpost.it,lastampa.it,ilfattoquotidiano.it,ilgiornale.it,ilmanifesto.it,ilfoglio.it',  # Italian news sources
-            from_param=(datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')  # Last 7 days
+            page_size=10,  # Increased to get more articles
+            from_param=(datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')  # Last 30 days
         )
         
         print(f"News API Response Status: {news.get('status', 'No status')}")
@@ -55,7 +57,9 @@ def get_bay_area_news():
                 print(f"\nArticle {i}:")
                 print(f"Title: {article.get('title', 'No title')}")
                 print(f"Description: {article.get('description', 'No description')[:100]}...")
-            return articles
+                print(f"Source: {article.get('source', {}).get('name', 'Unknown')}")
+                print(f"Published At: {article.get('publishedAt', 'Unknown')}")
+            return articles[:5]  # Return top 5 most relevant articles
         else:
             print("No articles found in API response")
             print(f"Full API Response: {news}")

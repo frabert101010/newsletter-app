@@ -35,9 +35,9 @@ def get_bay_area_news():
         print("\n=== Fetching News Articles ===")
         print(f"Using News API Key: {os.getenv('NEWS_API_KEY')[:5]}...")  # Only show first 5 chars for security
         
-        # Search for Bay Area tech and AI news in Italian
+        # Search for Bay Area tech and AI news in Italian with more specific query
         news = newsapi.get_everything(
-            q='(San Francisco OR "Bay Area" OR "Silicon Valley" OR "Silicon Valley" OR "San Francisco" OR "California") AND (AI OR "intelligenza artificiale" OR tech OR tecnologia OR startup OR "venture capital")',
+            q='("Silicon Valley" OR "San Francisco" OR "Bay Area") AND (tech OR tecnologia OR AI OR "intelligenza artificiale" OR startup) AND (USA OR "Stati Uniti" OR America)',
             language='it',  # Get Italian news
             sort_by='relevancy',
             page_size=5,
@@ -51,12 +51,22 @@ def get_bay_area_news():
         if news and 'articles' in news and news['articles']:
             articles = news['articles']
             print(f"Found {len(articles)} articles")
-            # No need to translate since we're getting Italian news directly
-            for i, article in enumerate(articles, 1):
-                print(f"\nArticle {i}:")
-                print(f"Title: {article.get('title', 'No title')}")
-                print(f"Description: {article.get('description', 'No description')[:100]}...")
-            return articles
+            # Filter articles to ensure they're about Bay Area tech
+            filtered_articles = []
+            for article in articles:
+                title = article.get('title', '').lower()
+                description = article.get('description', '').lower()
+                # Check if article is about Bay Area tech
+                if any(term in title or term in description for term in ['silicon valley', 'san francisco', 'bay area', 'california']):
+                    filtered_articles.append(article)
+                    print(f"\nArticle: {article.get('title', 'No title')}")
+                    print(f"Description: {article.get('description', 'No description')[:100]}...")
+            
+            if filtered_articles:
+                return filtered_articles
+            else:
+                print("No articles found after filtering for Bay Area tech")
+                return []
         else:
             print("No articles found in API response")
             print(f"Full API Response: {news}")

@@ -238,16 +238,35 @@ def cron_send_newsletter():
             print("Time to send newsletter")
             # Get all active recipients
             recipients = Recipient.query.filter_by(active=True).all()
+            if not recipients:
+                print("No active recipients found")
+                return "No active recipients found", 200
+                
             print(f"Found {len(recipients)} active recipients")
+            recipient_emails = [r.email for r in recipients]
             
             # Send to each recipient
+            success = True
             for recipient in recipients:
                 print(f"Sending to recipient: {recipient.email}")
                 if not send_newsletter(recipient_email=recipient.email):
-                    raise Exception(f"Failed to send newsletter to {recipient.email}")
+                    success = False
+                    break
             
-            print("=== Cron Job Completed Successfully ===")
-            return "Newsletter sent successfully", 200
+            if success:
+                # Record in history
+                history_entry = NewsletterHistory(
+                    subject=f"Notizie dagli Stati Uniti - {datetime.now().strftime('%d %B %Y')}",
+                    content="Newsletter sent successfully",  # We don't store the full content anymore
+                    recipients=','.join(recipient_emails),
+                    status='success'
+                )
+                db.session.add(history_entry)
+                db.session.commit()
+                print("=== Cron Job Completed Successfully ===")
+                return "Newsletter sent successfully", 200
+            else:
+                raise Exception("Failed to send newsletter to one or more recipients")
         else:
             print("Not time to send newsletter yet")
             return "Not time to send yet", 200
@@ -255,6 +274,16 @@ def cron_send_newsletter():
     except Exception as e:
         print(f"Error in cron job: {str(e)}")
         print("=== Cron Job Failed ===")
+        # Record error in history
+        history_entry = NewsletterHistory(
+            subject="Failed automated newsletter",
+            content="",
+            recipients="",
+            status='error',
+            error_message=str(e)
+        )
+        db.session.add(history_entry)
+        db.session.commit()
         return str(e), 500
 
 @app.route('/cron/test')

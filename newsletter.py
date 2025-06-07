@@ -36,15 +36,21 @@ def get_bay_area_news():
         print(f"Using News API Key: {os.getenv('NEWS_API_KEY')[:5]}...")  # Only show first 5 chars for security
         
         # Search for general American news in Italian with broader parameters
-        query = '(USA OR "Stati Uniti" OR America)'
+        query = '(USA OR "Stati Uniti" OR America OR Washington)'
         print(f"Search Query: {query}")
+        
+        # Get current date and date 15 days ago
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=15)
+        print(f"Date range: {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}")
         
         news = newsapi.get_everything(
             q=query,
             language='it',  # Get Italian news
             sort_by='relevancy',
-            page_size=10,  # Increased to get more articles
-            from_param=(datetime.now() - timedelta(days=15)).strftime('%Y-%m-%d')  # Last 15 days
+            page_size=10,  # Get more articles to choose from
+            from_param=start_date.strftime('%Y-%m-%d'),
+            to=end_date.strftime('%Y-%m-%d')
         )
         
         print(f"News API Response Status: {news.get('status', 'No status')}")

@@ -44,7 +44,7 @@ def get_bay_area_news():
             language='it',  # Get Italian news
             sort_by='relevancy',
             page_size=10,  # Increased to get more articles
-            from_param=(datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')  # Last 30 days
+            from_param=(datetime.now() - timedelta(days=15)).strftime('%Y-%m-%d')  # Last 15 days
         )
         
         print(f"News API Response Status: {news.get('status', 'No status')}")

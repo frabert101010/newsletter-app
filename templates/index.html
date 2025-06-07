@@ -7,8 +7,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
+            margin: 0;
             padding: 20px;
             background-color: #f5f5f5;
         }
@@ -113,6 +112,96 @@
         .toggle-button:hover {
             background-color: #5a6268;
         }
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .card-header {
+            background-color: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 1px solid #ddd;
+            border-radius: 8px 8px 0 0;
+        }
+        .card-header h2 {
+            margin: 0;
+            color: #333;
+            font-size: 1.5em;
+        }
+        .card-body {
+            padding: 20px;
+        }
+        .current-schedule {
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .current-schedule h3 {
+            color: #333;
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        .schedule-details p {
+            margin: 8px 0;
+            color: #555;
+        }
+        .badge {
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+        .bg-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .bg-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+        }
+        .form-control {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        .btn-warning {
+            background-color: #ffc107;
+            color: #000;
+        }
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+        }
+        .alert {
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .alert-info {
+            background-color: #cce5ff;
+            color: #004085;
+            border: 1px solid #b8daff;
+        }
     </style>
 </head>
 <body>
@@ -158,55 +247,88 @@
             {% endif %}
         </div>
 
-        <div class="schedule-section">
-            <h2>Schedule Settings</h2>
-            <form action="{{ url_for('update_schedule') }}" method="post">
-                <div class="form-group">
-                    <label for="frequency">Frequency:</label>
-                    <select id="frequency" name="frequency" required>
-                        <option value="minute" {% if schedule and schedule.frequency == 'minute' %}selected{% endif %}>Every Minute (Testing)</option>
-                        <option value="daily" {% if schedule and schedule.frequency == 'daily' %}selected{% endif %}>Daily</option>
-                        <option value="weekly" {% if schedule and schedule.frequency == 'weekly' %}selected{% endif %}>Weekly</option>
-                        <option value="monthly" {% if schedule and schedule.frequency == 'monthly' %}selected{% endif %}>Monthly</option>
-                    </select>
-                </div>
-                
-                <div class="form-group" id="weekly-option" style="display: none;">
-                    <label for="day_of_week">Day of Week:</label>
-                    <select id="day_of_week" name="day_of_week">
-                        <option value="0" {% if schedule and schedule.day_of_week == 0 %}selected{% endif %}>Monday</option>
-                        <option value="1" {% if schedule and schedule.day_of_week == 1 %}selected{% endif %}>Tuesday</option>
-                        <option value="2" {% if schedule and schedule.day_of_week == 2 %}selected{% endif %}>Wednesday</option>
-                        <option value="3" {% if schedule and schedule.day_of_week == 3 %}selected{% endif %}>Thursday</option>
-                        <option value="4" {% if schedule and schedule.day_of_week == 4 %}selected{% endif %}>Friday</option>
-                        <option value="5" {% if schedule and schedule.day_of_week == 5 %}selected{% endif %}>Saturday</option>
-                        <option value="6" {% if schedule and schedule.day_of_week == 6 %}selected{% endif %}>Sunday</option>
-                    </select>
-                </div>
-                
-                <div class="form-group" id="monthly-option" style="display: none;">
-                    <label for="day_of_month">Day of Month:</label>
-                    <select id="day_of_month" name="day_of_month">
-                        {% for day in range(1, 32) %}
-                            <option value="{{ day }}" {% if schedule and schedule.day_of_month == day %}selected{% endif %}>{{ day }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="time">Time:</label>
-                    <input type="time" id="time" name="time" value="{{ schedule.time if schedule else '09:00' }}" required>
-                </div>
-                
-                <button type="submit">Update Schedule</button>
+        <div class="card">
+            <div class="card-header">
+                <h2>Schedule Settings</h2>
+            </div>
+            <div class="card-body">
                 {% if schedule %}
-                    <a href="{{ url_for('toggle_schedule') }}">
-                        <button type="button" class="toggle-button">
-                            {% if schedule.active %}Deactivate{% else %}Activate{% endif %} Schedule
-                        </button>
-                    </a>
+                <div class="current-schedule mb-4">
+                    <h3>Current Schedule Status</h3>
+                    <div class="schedule-details">
+                        <p><strong>Status:</strong> 
+                            <span class="badge {% if schedule.active %}bg-success{% else %}bg-danger{% endif %}">
+                                {{ "Active" if schedule.active else "Inactive" }}
+                            </span>
+                        </p>
+                        <p><strong>Frequency:</strong> {{ schedule.frequency|title }}</p>
+                        {% if schedule.frequency == 'weekly' %}
+                        <p><strong>Day of Week:</strong> {{ ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'][schedule.day_of_week] }}</p>
+                        {% endif %}
+                        {% if schedule.frequency == 'monthly' %}
+                        <p><strong>Day of Month:</strong> {{ schedule.day_of_month }}</p>
+                        {% endif %}
+                        {% if schedule.time %}
+                        <p><strong>Time:</strong> {{ schedule.time }}</p>
+                        {% endif %}
+                        <p><strong>Last Updated:</strong> {{ schedule.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                    </div>
+                </div>
                 {% endif %}
-            </form>
+                
+                <form action="{{ url_for('update_schedule') }}" method="post">
+                    <div class="form-group">
+                        <label for="frequency">Frequency:</label>
+                        <select name="frequency" id="frequency" class="form-control" required>
+                            <option value="minute" {% if schedule and schedule.frequency == 'minute' %}selected{% endif %}>Every 5 Minutes (Testing - Render Cron Job)</option>
+                            <option value="daily" {% if schedule and schedule.frequency == 'daily' %}selected{% endif %}>Daily</option>
+                            <option value="weekly" {% if schedule and schedule.frequency == 'weekly' %}selected{% endif %}>Weekly</option>
+                            <option value="monthly" {% if schedule and schedule.frequency == 'monthly' %}selected{% endif %}>Monthly</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" id="weekly-option" style="display: none;">
+                        <label for="day_of_week">Day of Week:</label>
+                        <select id="day_of_week" name="day_of_week">
+                            <option value="0" {% if schedule and schedule.day_of_week == 0 %}selected{% endif %}>Monday</option>
+                            <option value="1" {% if schedule and schedule.day_of_week == 1 %}selected{% endif %}>Tuesday</option>
+                            <option value="2" {% if schedule and schedule.day_of_week == 2 %}selected{% endif %}>Wednesday</option>
+                            <option value="3" {% if schedule and schedule.day_of_week == 3 %}selected{% endif %}>Thursday</option>
+                            <option value="4" {% if schedule and schedule.day_of_week == 4 %}selected{% endif %}>Friday</option>
+                            <option value="5" {% if schedule and schedule.day_of_week == 5 %}selected{% endif %}>Saturday</option>
+                            <option value="6" {% if schedule and schedule.day_of_week == 6 %}selected{% endif %}>Sunday</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" id="monthly-option" style="display: none;">
+                        <label for="day_of_month">Day of Month:</label>
+                        <select id="day_of_month" name="day_of_month">
+                            {% for day in range(1, 32) %}
+                                <option value="{{ day }}" {% if schedule and schedule.day_of_month == day %}selected{% endif %}>{{ day }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="time">Time:</label>
+                        <input type="time" id="time" name="time" value="{{ schedule.time if schedule else '09:00' }}" required>
+                    </div>
+                    
+                    <div class="card-footer">
+                        <button type="submit" class="btn btn-primary">Update Schedule</button>
+                        {% if schedule and schedule.active %}
+                        <a href="{{ url_for('toggle_schedule') }}" class="btn btn-warning">Deactivate Schedule</a>
+                        {% else %}
+                        <a href="{{ url_for('toggle_schedule') }}" class="btn btn-success">Activate Schedule</a>
+                        {% endif %}
+                    </div>
+                </form>
+                {% if schedule and schedule.frequency == 'minute' %}
+                <div class="alert alert-info mt-3">
+                    <strong>Note:</strong> Even though the schedule is set to "Every 5 Minutes", the newsletter will be sent when Render's cron job runs (every 5 minutes). This is a limitation of the free tier.
+                </div>
+                {% endif %}
+            </div>
         </div>
 
         <div class="history-list">

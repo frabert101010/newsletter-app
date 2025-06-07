@@ -88,24 +88,30 @@ def send_newsletter_route():
             return redirect(url_for('index'))
         
         html_content = generate_newsletter_html(articles)
-        subject = f"Notizie Tech & Bay Area - {datetime.now().strftime('%d %B %Y')}"
+        subject = f"Notizie dagli Stati Uniti - {datetime.now().strftime('%d %B %Y')}"
         
         # Send to all recipients
         recipient_emails = [r.email for r in recipients]
+        success = True
         for recipient in recipients:
-            send_newsletter(html_content=html_content, recipient_email=recipient.email)
+            if not send_newsletter(recipient_email=recipient.email):
+                success = False
+                break
         
-        # Record in history
-        history_entry = NewsletterHistory(
-            subject=subject,
-            content=html_content,
-            recipients=','.join(recipient_emails),
-            status='success'
-        )
-        db.session.add(history_entry)
-        db.session.commit()
-        
-        flash('Newsletter sent successfully!', 'success')
+        if success:
+            # Record in history
+            history_entry = NewsletterHistory(
+                subject=subject,
+                content=html_content,
+                recipients=','.join(recipient_emails),
+                status='success'
+            )
+            db.session.add(history_entry)
+            db.session.commit()
+            flash('Newsletter sent successfully!', 'success')
+        else:
+            raise Exception("Failed to send newsletter to one or more recipients")
+            
     except Exception as e:
         # Record error in history
         history_entry = NewsletterHistory(

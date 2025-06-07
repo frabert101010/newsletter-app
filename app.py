@@ -208,102 +208,54 @@ def cron_send_newsletter():
         print(f"- Day of week: {schedule.day_of_week}")
         print(f"- Day of month: {schedule.day_of_month}")
 
-        # Check if it's time to send based on schedule
-        now = datetime.now()
-        should_send = False
-
+        # For minute frequency, send immediately
         if schedule.frequency == 'minute':
-            should_send = True
             print("Minute frequency detected - will send")
-        elif schedule.frequency == 'daily':
-            should_send = True
-            print("Daily frequency detected - will send")
-        elif schedule.frequency == 'weekly':
-            if now.weekday() == schedule.day_of_week:
-                should_send = True
-                print(f"Weekly frequency - today is the right day (weekday={now.weekday()}, scheduled={schedule.day_of_week})")
-            else:
-                print(f"Weekly frequency - wrong day (weekday={now.weekday()}, scheduled={schedule.day_of_week})")
-        elif schedule.frequency == 'monthly':
-            if now.day == schedule.day_of_month:
-                should_send = True
-                print(f"Monthly frequency - today is the right day (day={now.day}, scheduled={schedule.day_of_month})")
-            else:
-                print(f"Monthly frequency - wrong day (day={now.day}, scheduled={schedule.day_of_month})")
-
-        # Check if it's the right time
-        if should_send:
-            if schedule.frequency == 'minute':
-                # For minute frequency, send immediately
-                send_now = True
-                print("Minute frequency - sending now")
-            else:
-                schedule_time = datetime.strptime(schedule.time, '%H:%M').time()
-                send_now = now.time().hour == schedule_time.hour and now.time().minute == schedule_time.minute
-                print(f"Checking time: current={now.time()}, scheduled={schedule_time}, send_now={send_now}")
-
-            if send_now:
-                print("Time to send newsletter")
-                # Generate newsletter content
-                articles = get_bay_area_news()
-                if not articles:
-                    print("No articles found to send")
-                    return "No articles found to send", 200
-                
-                print(f"Found {len(articles)} articles")
-                html_content = generate_newsletter_html(articles)
-                subject = f"Notizie Tech & Bay Area - {now.strftime('%d %B %Y')}"
-                
-                # Get all active recipients
-                recipients = Recipient.query.filter_by(active=True).all()
-                if not recipients:
-                    print("No active recipients found")
-                    return "No active recipients found", 200
-                
-                print(f"Found {len(recipients)} active recipients")
-                # Send to all recipients
-                recipient_emails = [r.email for r in recipients]
-                for recipient in recipients:
-                    print(f"Sending to recipient: {recipient.email}")
-                    send_newsletter(html_content=html_content, recipient_email=recipient.email)
-                
-                # Record in history
-                history_entry = NewsletterHistory(
-                    subject=subject,
-                    content=html_content,
-                    recipients=','.join(recipient_emails),
-                    status='success'
-                )
-                db.session.add(history_entry)
-                db.session.commit()
-                
-                print("Newsletter sent successfully")
-                print("=== Cron Job Completed Successfully ===\n")
-                return "Newsletter sent successfully", 200
-            else:
-                print("Not the scheduled time yet")
-                print("=== Cron Job Completed - Not Time Yet ===\n")
-                return "Not the scheduled time yet", 200
+            send_now = True
         else:
-            print("Not the scheduled day")
-            print("=== Cron Job Completed - Not Scheduled Day ===\n")
-            return "Not the scheduled day", 200
+            # For other frequencies, check if it's time to send
+            current_time = datetime.now()
+            scheduled_time = datetime.strptime(schedule.time, '%H:%M').time()
+            current_time_only = current_time.time()
+            
+            # Check if current time matches scheduled time
+            time_matches = (current_time_only.hour == scheduled_time.hour and 
+                          current_time_only.minute == scheduled_time.minute)
+            
+            # Check day of week for weekly frequency
+            if schedule.frequency == 'weekly' and schedule.day_of_week is not None:
+                day_matches = current_time.weekday() == schedule.day_of_week
+                send_now = time_matches and day_matches
+            # Check day of month for monthly frequency
+            elif schedule.frequency == 'monthly' and schedule.day_of_month is not None:
+                day_matches = current_time.day == schedule.day_of_month
+                send_now = time_matches and day_matches
+            # For daily frequency, just check time
+            else:
+                send_now = time_matches
+
+        if send_now:
+            print("Time to send newsletter")
+            # Get all active recipients
+            recipients = Recipient.query.filter_by(active=True).all()
+            print(f"Found {len(recipients)} active recipients")
+            
+            # Send to each recipient
+            for recipient in recipients:
+                print(f"Sending to recipient: {recipient.email}")
+                if not send_newsletter(recipient_email=recipient.email):
+                    raise Exception(f"Failed to send newsletter to {recipient.email}")
+            
+            print("=== Cron Job Completed Successfully ===")
+            return "Newsletter sent successfully", 200
+        else:
+            print("Not time to send newsletter yet")
+            return "Not time to send yet", 200
             
     except Exception as e:
         print(f"Error in cron job: {str(e)}")
-        print("=== Cron Job Failed ===\n")
-        # Record error in history
-        history_entry = NewsletterHistory(
-            subject="Failed automated newsletter",
-            content="",
-            recipients="",
-            status='error',
-            error_message=str(e)
-        )
-        db.session.add(history_entry)
-        db.session.commit()
-        
-        return f"Error sending newsletter: {str(e)}", 500
+        print("=== Cron Job Failed ===")
+        return str(e), 500
 
 @app.route('/cron/test')
 def cron_test():

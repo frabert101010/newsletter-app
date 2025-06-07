@@ -1,7 +1,7 @@
 import os
 import schedule
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from newsapi import NewsApiClient
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -35,12 +35,14 @@ def get_bay_area_news():
         print("\n=== Fetching News Articles ===")
         print(f"Using News API Key: {os.getenv('NEWS_API_KEY')[:5]}...")  # Only show first 5 chars for security
         
-        # Search for Bay Area and tech news in English with a broader query
+        # Search for Bay Area tech and AI news with a more specific query
         news = newsapi.get_everything(
-            q='(San Francisco OR "Bay Area" OR "Silicon Valley")',
-            language='en',  # Get English news
-            sort_by='publishedAt',  # Get most recent news
-            page_size=5
+            q='(San Francisco OR "Bay Area" OR "Silicon Valley") AND (AI OR "artificial intelligence" OR tech OR technology OR startup OR "venture capital")',
+            language='en',
+            sort_by='relevancy',  # Changed to relevancy to get more relevant articles
+            page_size=5,
+            domains='techcrunch.com,sfchronicle.com,sfgate.com,mercurynews.com,sfist.com,sfstandard.com,bizjournals.com/sanfrancisco,sf.curbed.com',  # Bay Area specific news sources
+            from_param=(datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')  # Only get news from last 7 days
         )
         
         print(f"News API Response Status: {news.get('status', 'No status')}")

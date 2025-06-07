@@ -30,18 +30,18 @@ def translate_text(text):
         return text
 
 def get_bay_area_news():
-    """Fetch top 5 news articles about Bay Area and tech in English and translate to Italian."""
+    """Fetch top 5 news articles about Bay Area and tech in Italian."""
     try:
         print("\n=== Fetching News Articles ===")
         print(f"Using News API Key: {os.getenv('NEWS_API_KEY')[:5]}...")  # Only show first 5 chars for security
         
-        # Search for Bay Area tech and AI news with a more specific query
+        # Search for Bay Area tech and AI news in Italian
         news = newsapi.get_everything(
-            q='(San Francisco OR "Bay Area" OR "Silicon Valley") AND (AI OR "artificial intelligence" OR tech OR technology OR startup OR "venture capital")',
-            language='en',
-            sort_by='relevancy',  # Changed to relevancy to get more relevant articles
+            q='(San Francisco OR "Bay Area" OR "Silicon Valley" OR "Silicon Valley" OR "San Francisco" OR "California") AND (AI OR "intelligenza artificiale" OR tech OR tecnologia OR startup OR "venture capital")',
+            language='it',  # Get Italian news
+            sort_by='relevancy',
             page_size=5,
-            domains='techcrunch.com,sfchronicle.com,sfgate.com,mercurynews.com,sfist.com,sfstandard.com,bizjournals.com/sanfrancisco,sf.curbed.com',  # Bay Area specific news sources
+            domains='corriere.it,repubblica.it,ilsole24ore.com,ansa.it,ilpost.it,techprincess.it,digitalic.it,agendadigitale.eu',  # Italian tech and news sources
             from_param=(datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')  # Only get news from last 7 days
         )
         
@@ -51,16 +51,11 @@ def get_bay_area_news():
         if news and 'articles' in news and news['articles']:
             articles = news['articles']
             print(f"Found {len(articles)} articles")
-            # Translate titles and descriptions
+            # No need to translate since we're getting Italian news directly
             for i, article in enumerate(articles, 1):
                 print(f"\nArticle {i}:")
                 print(f"Title: {article.get('title', 'No title')}")
-                if article.get('title'):
-                    article['title'] = translate_text(article['title'])
-                    print(f"Translated title: {article['title']}")
-                if article.get('description'):
-                    article['description'] = translate_text(article['description'])
-                    print(f"Translated description: {article['description'][:100]}...")
+                print(f"Description: {article.get('description', 'No description')[:100]}...")
             return articles
         else:
             print("No articles found in API response")
@@ -138,7 +133,7 @@ def generate_newsletter_html(articles):
                 <h2>{{ article.title }}</h2>
                 <p>{{ article.description }}</p>
                 <p><a href="{{ article.url }}" target="_blank">Leggi di più</a></p>
-                <p class="original-link">Articolo originale in inglese</p>
+                <p class="original-link">Fonte: {{ article.source.name }}</p>
             </div>
             {% endfor %}
         </div>

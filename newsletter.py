@@ -32,6 +32,9 @@ def translate_text(text):
 def get_bay_area_news():
     """Fetch top 5 news articles about Bay Area and tech in English and translate to Italian."""
     try:
+        print("\n=== Fetching News Articles ===")
+        print(f"Using News API Key: {os.getenv('NEWS_API_KEY')[:5]}...")  # Only show first 5 chars for security
+        
         # Search for Bay Area and tech news in English with a broader query
         news = newsapi.get_everything(
             q='(San Francisco OR "Bay Area" OR "Silicon Valley")',
@@ -40,23 +43,29 @@ def get_bay_area_news():
             page_size=5
         )
         
-        print(f"News API Response: {news}")  # Debug log
+        print(f"News API Response Status: {news.get('status', 'No status')}")
+        print(f"Total Results: {news.get('totalResults', 0)}")
         
         if news and 'articles' in news and news['articles']:
             articles = news['articles']
+            print(f"Found {len(articles)} articles")
             # Translate titles and descriptions
-            for article in articles:
+            for i, article in enumerate(articles, 1):
+                print(f"\nArticle {i}:")
+                print(f"Title: {article.get('title', 'No title')}")
                 if article.get('title'):
                     article['title'] = translate_text(article['title'])
+                    print(f"Translated title: {article['title']}")
                 if article.get('description'):
                     article['description'] = translate_text(article['description'])
+                    print(f"Translated description: {article['description'][:100]}...")
             return articles
         else:
-            print("Nessun articolo trovato nella risposta API")
-            print(f"API Response: {news}")  # Debug log
+            print("No articles found in API response")
+            print(f"Full API Response: {news}")
             return []
     except Exception as e:
-        print(f"Errore nel recupero delle notizie: {e}")
+        print(f"Error fetching news: {str(e)}")
         return []
 
 def generate_newsletter_html(articles):

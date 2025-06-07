@@ -32,23 +32,28 @@ def translate_text(text):
 def get_bay_area_news():
     """Fetch top 5 news articles about Bay Area and tech in English and translate to Italian."""
     try:
-        # Search for Bay Area and tech news in English
+        # Search for Bay Area and tech news in English with a broader query
         news = newsapi.get_everything(
-            q='(San Francisco OR "Bay Area") AND (tech OR technology)',
+            q='(San Francisco OR "Bay Area" OR "Silicon Valley")',
             language='en',  # Get English news
-            sort_by='relevancy',
+            sort_by='publishedAt',  # Get most recent news
             page_size=5
         )
         
-        if news and 'articles' in news:
+        print(f"News API Response: {news}")  # Debug log
+        
+        if news and 'articles' in news and news['articles']:
             articles = news['articles']
             # Translate titles and descriptions
             for article in articles:
-                article['title'] = translate_text(article['title'])
-                article['description'] = translate_text(article['description'])
+                if article.get('title'):
+                    article['title'] = translate_text(article['title'])
+                if article.get('description'):
+                    article['description'] = translate_text(article['description'])
             return articles
         else:
             print("Nessun articolo trovato nella risposta API")
+            print(f"API Response: {news}")  # Debug log
             return []
     except Exception as e:
         print(f"Errore nel recupero delle notizie: {e}")

@@ -36,7 +36,7 @@ def get_bay_area_news():
         print(f"Using News API Key: {os.getenv('NEWS_API_KEY')[:5]}...")  # Only show first 5 chars for security
         
         # Search for general American news in Italian
-        query = 'America'
+        query = 'America OR "Stati Uniti"'
         print(f"Search Query: {query}")
         
         # Get current date and date 15 days ago

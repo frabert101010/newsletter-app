@@ -129,7 +129,12 @@ def update_schedule():
     day_of_month = request.form.get('day_of_month')
     time = request.form.get('time')
     
-    print(f"Updating schedule with: frequency={frequency}, day_of_week={day_of_week}, day_of_month={day_of_month}, time={time}")
+    print("\n=== Updating Schedule ===")
+    print(f"Received form data:")
+    print(f"- Frequency: {frequency}")
+    print(f"- Day of week: {day_of_week}")
+    print(f"- Day of month: {day_of_month}")
+    print(f"- Time: {time}")
     
     try:
         schedule = Schedule.query.first()
@@ -138,7 +143,9 @@ def update_schedule():
             db.session.add(schedule)
             print("Created new schedule")
         else:
-            print(f"Found existing schedule: active={schedule.active}")
+            print(f"Found existing schedule:")
+            print(f"- Current frequency: {schedule.frequency}")
+            print(f"- Current active status: {schedule.active}")
         
         schedule.frequency = frequency
         schedule.day_of_week = int(day_of_week) if day_of_week else None
@@ -147,11 +154,15 @@ def update_schedule():
         schedule.active = True
         
         db.session.commit()
-        print(f"Schedule updated successfully: active={schedule.active}")
+        print("Schedule updated successfully:")
+        print(f"- New frequency: {schedule.frequency}")
+        print(f"- New active status: {schedule.active}")
+        print("=== Schedule Update Completed ===\n")
         flash('Schedule updated successfully!', 'success')
     except Exception as e:
         db.session.rollback()
         print(f"Error updating schedule: {str(e)}")
+        print("=== Schedule Update Failed ===\n")
         flash(f'Error updating schedule: {str(e)}', 'error')
     
     return redirect(url_for('index'))
@@ -175,24 +186,32 @@ def view_newsletter(id):
 def cron_send_newsletter():
     """Endpoint for Render's cron job to trigger newsletter sending."""
     try:
-        print("Cron job triggered")
+        print("\n=== Cron Job Started ===")
+        print(f"Current time: {datetime.now()}")
+        
         # Check if there's an active schedule
         schedule = Schedule.query.filter_by(active=True).first()
         if not schedule:
-            print("No active schedule found")
+            print("No active schedule found in database")
             return "No active schedule found", 200
 
-        print(f"Found active schedule: frequency={schedule.frequency}, time={schedule.time}")
+        print(f"Found active schedule:")
+        print(f"- Frequency: {schedule.frequency}")
+        print(f"- Time: {schedule.time}")
+        print(f"- Active: {schedule.active}")
+        print(f"- Day of week: {schedule.day_of_week}")
+        print(f"- Day of month: {schedule.day_of_month}")
+
         # Check if it's time to send based on schedule
         now = datetime.now()
         should_send = False
 
         if schedule.frequency == 'minute':
             should_send = True
-            print("Minute frequency - will send")
+            print("Minute frequency detected - will send")
         elif schedule.frequency == 'daily':
             should_send = True
-            print("Daily frequency - will send")
+            print("Daily frequency detected - will send")
         elif schedule.frequency == 'weekly':
             if now.weekday() == schedule.day_of_week:
                 should_send = True
@@ -239,6 +258,7 @@ def cron_send_newsletter():
                 # Send to all recipients
                 recipient_emails = [r.email for r in recipients]
                 for recipient in recipients:
+                    print(f"Sending to recipient: {recipient.email}")
                     send_newsletter(html_content=html_content, recipient_email=recipient.email)
                 
                 # Record in history
@@ -252,16 +272,20 @@ def cron_send_newsletter():
                 db.session.commit()
                 
                 print("Newsletter sent successfully")
+                print("=== Cron Job Completed Successfully ===\n")
                 return "Newsletter sent successfully", 200
             else:
                 print("Not the scheduled time yet")
+                print("=== Cron Job Completed - Not Time Yet ===\n")
                 return "Not the scheduled time yet", 200
         else:
             print("Not the scheduled day")
+            print("=== Cron Job Completed - Not Scheduled Day ===\n")
             return "Not the scheduled day", 200
             
     except Exception as e:
         print(f"Error in cron job: {str(e)}")
+        print("=== Cron Job Failed ===\n")
         # Record error in history
         history_entry = NewsletterHistory(
             subject="Failed automated newsletter",

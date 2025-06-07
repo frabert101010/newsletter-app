@@ -35,8 +35,8 @@ def get_bay_area_news():
         print("\n=== Fetching News Articles ===")
         print(f"Using News API Key: {os.getenv('NEWS_API_KEY')[:5]}...")  # Only show first 5 chars for security
         
-        # Search for general American news in Italian with broader parameters
-        query = '(USA OR "Stati Uniti" OR America OR Washington)'
+        # Search for general American news in Italian
+        query = 'America'
         print(f"Search Query: {query}")
         
         # Get current date and date 15 days ago
@@ -50,6 +50,7 @@ def get_bay_area_news():
                 language='it',  # Get Italian news
                 sort_by='relevancy',
                 page_size=10,  # Get more articles to choose from
+                domains='ansa.it,corriere.it,repubblica.it,ilsole24ore.com,ilpost.it,lastampa.it,ilfattoquotidiano.it,ilgiornale.it,ilmanifesto.it,ilfoglio.it',  # Italian news sources
                 from_param=start_date.strftime('%Y-%m-%d'),
                 to=end_date.strftime('%Y-%m-%d')
             )
